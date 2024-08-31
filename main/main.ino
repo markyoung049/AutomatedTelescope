@@ -11,6 +11,9 @@ void setup() {
   float position[2];
   requestLocation(position);
   Serial.println(position[1]);
+
+  String data = requestBodyPosition("moon", 85.5, 82);
+  Serial.println(data);
 }
 
 
@@ -23,8 +26,8 @@ void loop() {
 
 
 // returns the coordinates of the object in the sky
-String requestBodyPosition(String name) {
-  Serial.println('Body: ' + name);
+String requestBodyPosition(String name, float latitude, float longitude) {
+  Serial.println("Body: " + name);
 
   // Loop until python returns a reponse
   while (Serial.available() == 0) {

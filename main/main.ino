@@ -1,5 +1,31 @@
+#include <math.h>
+
+
+const int north = 2; // North Pin
+const int west = 8; // West Pin
+const int east = 12; // East Pin
+const int south = 13; // North Pin
+
 void setup() {
   // put your setup code here, to run once:
+  pinMode(north, OUTPUT);
+  pinMode(south, OUTPUT);
+  pinMode(east, OUTPUT);
+  pinMode(west, OUTPUT);
+
+  digitalWrite(north, HIGH);
+  delay(1000);
+
+  digitalWrite(east, HIGH);
+  delay(1000);
+
+  digitalWrite(south, HIGH);
+  delay(1000);
+
+  digitalWrite(west, HIGH);
+  delay(1000);
+  
+
 
 
   Serial.begin(9600);
@@ -10,10 +36,48 @@ void setup() {
   Serial.println("Arduino Ready");
   float position[2];
   requestLocation(position);
-  Serial.println(position[1]);
+ 
 
-  String data = requestBodyPosition("moon", 85.5, 82);
+  float data = requestBodyPosition("moon", 85.5, 82);
   Serial.println(data);
+
+  float azimuthRadians = data * (PI/180);
+  // Azimuth has north set a zero, so this angle needs a correction
+  azimuthRadians = -(azimuthRadians + PI/2);
+  
+  // Show angle on circuit 
+  float y = sin(azimuthRadians);
+  float x = cos(azimuthRadians);
+
+  // Square the values to make it more apparent on the display
+  y = y*y;
+  x = x*x;
+
+// Display North/South
+  if (y >= 0) {
+    int brightness = round(y * 255 / (2*PI));
+    analogWrite(north, brightness);   
+  }
+  else {
+    int brightness = round(y * -255 / (2*PI));
+    analogWrite(south, brightness);
+  }
+
+// Display East/West
+  if (x >= 0) {
+    int brightness = round(x * 255 / (2*PI));
+    analogWrite(east, brightness);   
+  }
+  else {
+    int brightness = round(x * -255 / (2*PI));
+    analogWrite(west, brightness);
+  }
+
+
+
+
+  // get Azimuth of the moon and show on leds
+  delay (10000);
 }
 
 
@@ -26,7 +90,7 @@ void loop() {
 
 
 // returns the coordinates of the object in the sky
-String requestBodyPosition(String name, float latitude, float longitude) {
+float requestBodyPosition(String name, float latitude, float longitude) {
   Serial.println("Body: " + name);
 
   // Loop until python returns a reponse
@@ -34,7 +98,7 @@ String requestBodyPosition(String name, float latitude, float longitude) {
     delay(100);
   }
 
-  String incomingData = Serial.readStringUntil('\n');  // Read incoming data until newline character
+  float incomingData = Serial.readStringUntil('\n').toFloat();  // Read incoming data until newline character
   return incomingData;
 }
 

@@ -6,8 +6,8 @@ import http.client
 # Set up serial communication with the Arduino
 arduino = serial.Serial('COM4', 9600)  # Replace 'COM3' with your port
 
-longitude = "33.7758"
-latitude = "-84.3973"
+latitude = "33.7758"
+longitude = "-84.3973"
 
 
 
@@ -54,7 +54,10 @@ while True:
 
 
             response = requests.get(url, headers = headers, params=params)
-            print(response.status_code)
-            print(response.text)
+            data = response.json()
+            azimuth = data.get('data').get('table')['rows'][0]['cells'][0]['position']['horizontal']['azimuth']['degrees']
+
+            arduino.write(azimuth.encode('utf-8'))
             # Print the response or send it back to Arduino
+
             #print(f"Server response: {response.text}")

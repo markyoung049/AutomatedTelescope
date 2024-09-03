@@ -38,7 +38,7 @@ void setup() {
   requestLocation(position);
  
 
-  float data = requestBodyPosition("moon", 85.5, 82);
+  float data = requestBodyPosition("venus", 85.5, 82);
   Serial.println(data);
 
   float azimuthRadians = data * (PI/180);
@@ -50,8 +50,8 @@ void setup() {
   float x = cos(azimuthRadians);
 
   // Square the values to make it more apparent on the display
-  y = y*y;
-  x = x*x;
+  x = x*x*x;
+  y = y*y*y;
 
 // Display North/South
   if (y >= 0) {

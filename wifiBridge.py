@@ -2,7 +2,7 @@ import serial
 import requests
 import base64
 import datetime
-import http.client
+
 # Set up serial communication with the Arduino
 arduino = serial.Serial('COM4', 9600)  # Replace 'COM3' with your port
 
@@ -23,21 +23,22 @@ while True:
         request = arduino.readline().decode('utf-8').strip()
         print(f"Received from Arduino: {request}")
         # if getting the position
+
         if request == 'Position':
-
-            
-
+            # Send the daa to the arduino
             arduino.write((latitude+ ", "+ longitude + '\n').encode('utf-8'))
             
 
 
-        # if getting the API call
+        # If getting the API call
         elif request[:4] == "Body":
             name = request[6:]
 
             # Get the current date
             currentDate = datetime.date.today()
             currentTime = datetime.datetime.now().strftime('%H:%M:%S')
+
+
             # Make the request
             url = f'https://api.astronomyapi.com/api/v2/bodies/positions/{name}'
 
@@ -52,11 +53,10 @@ while True:
                 "time": currentTime   
             }      
 
-
+            # Grab azimuth and send to arduino
             response = requests.get(url, headers = headers, params=params)
             data = response.json()
             azimuth = data.get('data').get('table')['rows'][0]['cells'][0]['position']['horizontal']['azimuth']['degrees']
-
             arduino.write(azimuth.encode('utf-8'))
             # Print the response or send it back to Arduino
 

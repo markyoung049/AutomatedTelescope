@@ -1,90 +1,40 @@
 #include <math.h>
+#include <Wire.h>         // Library that allows communication with I2C Device
+#include <MPU9250.h>
 
-
-const int north = 2; // North Pin
-const int west = 8; // West Pin
-const int east = 12; // East Pin
-const int south = 13; // North Pin
+MPU9250 mpu;
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(north, OUTPUT);
-  pinMode(south, OUTPUT);
-  pinMode(east, OUTPUT);
-  pinMode(west, OUTPUT);
-
-  digitalWrite(north, HIGH);
-  delay(1000);
-
-  digitalWrite(east, HIGH);
-  delay(1000);
-
-  digitalWrite(south, HIGH);
-  delay(1000);
-
-  digitalWrite(west, HIGH);
-  delay(1000);
-  
-
-
-
   Serial.begin(9600);
-  while (!Serial) {
-      ; // Wait for the serial port to connect
-  }
-
-  Serial.println("Arduino Ready");
-  float position[2];
-  requestLocation(position);
- 
-
-  float data = requestBodyPosition("venus", 85.5, 82);
-  Serial.println(data);
-
-  float azimuthRadians = data * (PI/180);
-  // Azimuth has north set a zero, so this angle needs a correction
-  azimuthRadians = -(azimuthRadians + PI/2);
   
-  // Show angle on circuit 
-  float y = sin(azimuthRadians);
-  float x = cos(azimuthRadians);
-
-  // Square the values to make it more apparent on the display
-  x = x*x*x;
-  y = y*y*y;
-
-// Display North/South
-  if (y >= 0) {
-    int brightness = round(y * 255 / (2*PI));
-    analogWrite(north, brightness);   
+  Wire.begin();
+  
+  if (!mpu.setup(0x68)) {  // Address of the MPU9250
+    Serial.println("MPU9250 connection failed.");
+    while (1);
   }
-  else {
-    int brightness = round(y * -255 / (2*PI));
-    analogWrite(south, brightness);
-  }
-
-// Display East/West
-  if (x >= 0) {
-    int brightness = round(x * 255 / (2*PI));
-    analogWrite(east, brightness);   
-  }
-  else {
-    int brightness = round(x * -255 / (2*PI));
-    analogWrite(west, brightness);
-  }
-
-
-
-
-  // get Azimuth of the moon and show on leds
-  delay (10000);
 }
 
-
-
 void loop() {
-  // put your main code here, to run repeatedly:
+  if (mpu.update()) {
+    float accelerometer[3] = {mpu.getAccX(), mpu.getAccY(), mpu.getAccZ()}; // Grabbing the acceleration vector
+    float magnometer[3] = {mpu.getMagX(), mpu.getMagY(), mpu.getMagZ()}; // Grabbing the magnometer vector
+    float gyroscope[3] = {mpu.getGyroX(), mpu.getGyroY(), mpu.getGyroZ()}; // Grabbing the gyroscope vector
+    Serial.print("Data: ");
+    Serial.print(accelerometer[0]);
+    Serial.print(' ');
+    Serial.print(accelerometer[1]);
+    Serial.print(' ');
+    Serial.print(accelerometer[2]);
+    Serial.print('\n');
+    delay(10);
+    // Compute where east is
+    float east[3] = { accelerometer[2]*magnometer[3] - accelerometer[3]*magnometer[2],
+                        accelerometer[3]*magnometer[1] - accelerometer[1]*magnometer[3],
+                        accelerometer[1]*magnometer[2] - accelerometer[2]*magnometer[1]};
 
+
+  }
 }
 
 
@@ -120,4 +70,14 @@ void requestLocation(float position[2]) {
   position[0] = latitude;
   position[1] = longitude;
   return position;
+}
+
+
+// This funcitons caluclates the azimuth from the data in requestLocation
+float getAzimuth(float data){
+
+  float azimuthRadians = data * (PI/180);
+  // Azimuth has north set a zero, so this angle needs a correction
+  azimuthRadians = -(azimuthRadians + PI/2);
+  return azimuthRadians;
 }

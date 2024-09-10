@@ -1,40 +1,47 @@
 #include <math.h>
 #include <Wire.h>         // Library that allows communication with I2C Device
-#include <MPU9250.h>
-
-MPU9250 mpu;
+#include "mpu.h"
 
 void setup() {
   Serial.begin(9600);
   
   Wire.begin();
   
-  if (!mpu.setup(0x68)) {  // Address of the MPU9250
-    Serial.println("MPU9250 connection failed.");
-    while (1);
-  }
+  // Initialize MPU-9250 (Accel + Gyro)
+  initMPU9250();
+  
+  // Initialize AK8963 (Magnetometer)
+  initAK8963();
 }
 
 void loop() {
-  if (mpu.update()) {
-    float accelerometer[3] = {mpu.getAccX(), mpu.getAccY(), mpu.getAccZ()}; // Grabbing the acceleration vector
-    float magnometer[3] = {mpu.getMagX(), mpu.getMagY(), mpu.getMagZ()}; // Grabbing the magnometer vector
-    float gyroscope[3] = {mpu.getGyroX(), mpu.getGyroY(), mpu.getGyroZ()}; // Grabbing the gyroscope vector
-    Serial.print("Data: ");
-    Serial.print(accelerometer[0]);
-    Serial.print(' ');
-    Serial.print(accelerometer[1]);
-    Serial.print(' ');
-    Serial.print(accelerometer[2]);
-    Serial.print('\n');
-    delay(10);
-    // Compute where east is
-    float east[3] = { accelerometer[2]*magnometer[3] - accelerometer[3]*magnometer[2],
-                        accelerometer[3]*magnometer[1] - accelerometer[1]*magnometer[3],
-                        accelerometer[1]*magnometer[2] - accelerometer[2]*magnometer[1]};
+  
+  float accel[3]; // Grabbing the acceleration vector
+  float mag[3]; // Grabbing the magnetometer vector
+  float gyro[3]; // Grabbing the gyroscope vector
 
-
-  }
+  readAccelData(accel);
+  readGyroData(gyro);
+  readMagData(mag);
+  
+  Serial.print("Data: ");
+  Serial.print(accel[0]);
+  Serial.print(' ');
+  Serial.print(accel[1]);
+  Serial.print(' ');
+  Serial.print(accel[2]);
+  Serial.print('\n');
+  
+  //delay(1000);
+  // Compute where east is
+  /*
+  float east[3] = { accelerometer[2]*magnometer[3] - accelerometer[3]*magnometer[2],
+                      accelerometer[3]*magnometer[1] - accelerometer[1]*magnometer[3],
+                      accelerometer[1]*magnometer[2] - accelerometer[2]*magnometer[1]};
+  Serial.println(magnometer[0]);
+  Serial.println(magnometer[1]);
+  Serial.println(magnometer[2]);
+  */
 }
 
 

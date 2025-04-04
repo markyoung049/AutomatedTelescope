@@ -81,6 +81,9 @@ void initMPU9250() {
   
   // Set DLPF (Digital Low Pass Filter) configuration
   writeByte(MPU9250_ADDRESS, CONFIG, 0x01);
+
+  writeByte(0x68, 0x37, 0x02);  // Enable bypass mode
+  delay(10);
 }
 
 void initAK8963() {
@@ -92,8 +95,8 @@ void initAK8963() {
   writeByte(AK8963_ADDRESS, AK8963_CNTL1, 0x0F);
   delay(10);
 
-  // Set AK8963 to Continuous measurement mode 2 (100 Hz)
-  writeByte(AK8963_ADDRESS, AK8963_CNTL1, 0x16);
+  // Set AK8963 to Continuous measurement mode 1 (8 Hz)
+  writeByte(AK8963_ADDRESS, AK8963_CNTL1, 0x12);
   delay(10);
 }
 
@@ -143,7 +146,7 @@ void readMagData(float *data) {
   readBytes(AK8963_ADDRESS, AK8963_HXL, 7, &rawData[0]);
   
   // Convert the data to 16-bit values
-  float magX, magY, magZ;
+  int16_t magX, magY, magZ;
   magX = ((int16_t)rawData[1] << 8) | rawData[0];
   magY = ((int16_t)rawData[3] << 8) | rawData[2];
   magZ = ((int16_t)rawData[5] << 8) | rawData[4];

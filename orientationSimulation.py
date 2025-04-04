@@ -4,7 +4,7 @@ import sys
 import math
 
 # Set up serial communication with the Arduino
-arduino = serial.Serial('COM4', 9600)  # Replace 'COM3' with your port
+arduino = serial.Serial('COM5', 9600)  # Replace 'COM3' with your port
 
 # Initialize Pygame
 pygame.init()
@@ -32,27 +32,46 @@ while running:
 
         if request[0] == "Data:":
 
-            # Draw the vector
+            # Do math for accelerometer vector
             origin = (screenSize // 2, screenSize // 2) # Compute the origin
-            vector = [float(request[1]), float(request[2]), float(request[3])] # Get the vector
-            magnitude = math.sqrt(vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]) # Compute vector magnitude
-            lineSize = screenSize // 3 # Sets the max length of the line
-            normalizedVector = [int(vector[0] * lineSize / magnitude), 
-                                int(vector[1] * 255 / magnitude), # normalized for color, if confused keep reading
-                                int(vector[2] * lineSize / magnitude)] # Vector normalization to line size
+            accelVector = [float(request[1]), float(request[2]), float(request[3])] # Get the accel ector
+            accelMagnitude = math.sqrt(accelVector[0] * accelVector[0] + accelVector[1] * accelVector[1] + accelVector[2] * accelVector[2]) # Compute vector magnitude
+            normalizedAccel = [accelVector[0] / accelMagnitude, accelVector[1] / accelMagnitude, accelVector[2] / accelMagnitude]
+            # 
+            magVector = [float(request[4]), float(request[5]), float(request[6])]
+            magMagnitude = math.sqrt(magVector[0] * magVector[0] + magVector[1] * magVector[1] + magVector[2] * magVector[2]) # Compute vector magnitude
+            normalizedMag = [magVector[0] / magMagnitude, magVector[1] / magMagnitude, magVector[2] / magMagnitude]
+
+            # Compute east via accel x mag
+            east = [(normalizedAccel[1] * normalizedMag[2]) - (normalizedAccel[2] * normalizedMag[1]),
+                    (normalizedAccel[2] * normalizedMag[0]) - (normalizedAccel[0] * normalizedMag[2]),
+                    (normalizedAccel[0] * normalizedMag[1]) - (normalizedAccel[1] * normalizedMag[0])]
             
-            # Sompute line endpoint (uses Z because im showing this in x-z plane)
+            # North is east x up
+            north = [(east[1] * normalizedAccel[2]) - (east[2] * normalizedAccel[1]),
+                     (east[2] * normalizedAccel[0]) - (east[0] * normalizedAccel[2]),
+                     (east[0] * normalizedAccel[1]) - (east[1] * normalizedAccel[0])]
+            
+
+            lineSize = screenSize // 3 # Sets the max length of the line
+            normalizedVector = [int(north[0] * lineSize), 
+                                int(north[1] * 255 ), # normalized for color, if confused keep reading
+                                int(north[2] * lineSize)] # Vector normalization to line size
+
+            # Compute line endpoint (uses Z because im showing this in x-z plane)
             endPoint = (origin[0] - normalizedVector[0], # transform based on nveted x axis o accelerometer
                         origin[1] - normalizedVector[2]) # subtracts because pygame's y-axis is inverted
 
             # Depict y axis with color. green for toward you and red for away
             color = []
-            if vector[1] >= 0:
+            if north[1] >= 0:
                 color = [0, normalizedVector[1], 0]
             else:
                 color = [-normalizedVector[1], 0, 0] 
                 
-
+            
+            heading = math.atan2(north[1], north[0]) * (180.0 / math.pi)
+            print(heading)
             # Draw the line
             # Fill the screen with a color (optional)
             screen.fill((255, 255, 255))  # White background

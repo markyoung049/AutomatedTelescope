@@ -2,6 +2,7 @@
 #include <Wire.h>         // Library that allows communication with I2C Device
 #include "mpu.h"
 
+
 void setup() {
   Serial.begin(9600);
   
@@ -15,24 +16,55 @@ void setup() {
 }
 
 void loop() {
-  
-  float accel[3]; // Grabbing the acceleration vector
-  float mag[3]; // Grabbing the magnetometer vector
-  float gyro[3]; // Grabbing the gyroscope vector
+    
+  float accel[3] = {0.0, 0.0, 0.0}; // Grabbing the acceleration vector
+  float mag[3] = {0.0, 0.0, 0.0}; // Grabbing the magnetometer vector
+  float gyro[3] = {0.0, 0.0, 0.0}; // Grabbing the gyroscope vector 
 
-  readAccelData(accel);
-  readGyroData(gyro);
-  readMagData(mag);
+  // Avgerage the values for smoothing 
+  for (int i=0; i<100; i++){
+
   
+    float a[3]; // Grabbing the acceleration vector
+    float m[3]; // Grabbing the magnetometer vector
+    float g[3]; // Grabbing the gyroscope vector
+
+    
+    readAccelData(a);
+    //readGyroData(g);
+    
+
+    readMagData(m);
+
+   
+    accel[0] += a[0]/100; 
+    accel[1] += a[1]/100; 
+    accel[2] += a[2]/100;
+    
+    mag[0] += m[0]/100; 
+    mag[1] += m[1]/100; 
+    mag[2] += m[2]/100;
+    
+  }
+
   Serial.print("Data: ");
+  
   Serial.print(accel[0]);
   Serial.print(' ');
   Serial.print(accel[1]);
   Serial.print(' ');
   Serial.print(accel[2]);
+  Serial.print(' '); 
+  
+  Serial.print(mag[0]);
+  Serial.print(' ');
+  Serial.print(mag[1]);
+  Serial.print(' ');
+  Serial.print(mag[2]);
+
   Serial.print('\n');
   
-  //delay(1000);
+  
   // Compute where east is
   /*
   float east[3] = { accelerometer[2]*magnometer[3] - accelerometer[3]*magnometer[2],

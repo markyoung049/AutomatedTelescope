@@ -61,3 +61,8 @@ while True:
             # Print the response or send it back to Arduino
 
             #print(f"Server response: {response.text}")
+
+
+
+
+

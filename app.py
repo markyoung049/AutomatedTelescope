@@ -24,17 +24,32 @@ window.configure(bg="#FFFFFF")
 # Lookup the object and if it exists, then track it and update the data appropriately. 
 def objectLookup():
     
-    azimuth = tracking.lookup()
-    Label_azimuth.configure(text = azimuth)
-    Label_azimuth.after(1000, objectLookup)
+    # Grab the data
+    object = objectEntry.get()
+    az, alt = tracking.lookup(object)
+
+    # Write the data
+    Label_object.configure(text = object)
+    Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
+    Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
+
+    # Queue updates
+    #Label_azimuth.after(5000, objectUpdate())
 
 
+# Update the object currently in focus
+def objectUpdate():
 
+    # Grab the azimuth and add earth rotation amount
+    azimuth = 0
+    newAzimuth = float(azimuth + 0.000075)
+    Label_azimuth.configure(text = "Azimuth: " + str(newAzimuth) + "°")
+    
 
 ########################################################################
 # Elements
 
-Label_azimuth = customtkinter.CTkLabel(
+Label_object = customtkinter.CTkLabel(
     master=window,
     text="Label14",
     font=("Arial", 14),
@@ -45,7 +60,7 @@ Label_azimuth = customtkinter.CTkLabel(
     bg_color="#FFFFFF",
     fg_color="#FFFFFF",
     )
-Label_azimuth.place(x=270, y=180)
+Label_object.place(x=270, y=180)
 Button_id21 = customtkinter.CTkButton(
     master=window,
     text="+90",
@@ -98,9 +113,9 @@ Label_id7 = customtkinter.CTkLabel(
     fg_color="#FFFFFF",
     )
 Label_id7.place(x=30, y=180)
-Label_id15 = customtkinter.CTkLabel(
+Label_azimuth = customtkinter.CTkLabel(
     master=window,
-    text="Label15",
+    text="Azimuth: ",
     font=("Arial", 14),
     text_color="#000000",
     height=30,
@@ -109,7 +124,7 @@ Label_id15 = customtkinter.CTkLabel(
     bg_color="#FFFFFF",
     fg_color="#FFFFFF",
     )
-Label_id15.place(x=270, y=210)
+Label_azimuth.place(x=270, y=210)
 Label_id20 = customtkinter.CTkLabel(
     master=window,
     text="Horizontal:",
@@ -136,7 +151,7 @@ Button_id19 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
-    command=objectLookup
+    command=lambda: objectLookup()
     )
 Button_id19.place(x=400, y=140)
 Label_id8 = customtkinter.CTkLabel(
@@ -151,7 +166,7 @@ Label_id8 = customtkinter.CTkLabel(
     fg_color="#FFFFFF",
     )
 Label_id8.place(x=30, y=210)
-Entry_id6 = customtkinter.CTkEntry(
+objectEntry = customtkinter.CTkEntry(
     master=window,
     placeholder_text="e.g. Moon",
     placeholder_text_color="#454545",
@@ -166,7 +181,7 @@ Entry_id6 = customtkinter.CTkEntry(
     fg_color="#f7f7f7",
 
     )
-Entry_id6.place(x=270, y=140)
+objectEntry.place(x=270, y=140)
 Button_id22 = customtkinter.CTkButton(
     master=window,
     text="-90",
@@ -200,9 +215,9 @@ Button_id1 = customtkinter.CTkButton(
     command=tracking.enableTracking
     )
 Button_id1.place(x=30, y=140)
-Label_id16 = customtkinter.CTkLabel(
+Label_altitude = customtkinter.CTkLabel(
     master=window,
-    text="Label16",
+    text="Altitude: ",
     font=("Arial", 14),
     text_color="#000000",
     height=30,
@@ -211,7 +226,7 @@ Label_id16 = customtkinter.CTkLabel(
     bg_color="#FFFFFF",
     fg_color="#FFFFFF",
     )
-Label_id16.place(x=270, y=240)
+Label_altitude.place(x=270, y=240)
 Button_id25 = customtkinter.CTkButton(
     master=window,
     text="-90",

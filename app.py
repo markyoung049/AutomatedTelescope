@@ -6,11 +6,11 @@
 # libraries Import
 from tkinter import *
 import customtkinter
+import tracking
 
 
 ########################################################################
 # Main Window Properties
-
 
 window = Tk()
 window.title("Telescope Tracking System")
@@ -21,11 +21,20 @@ window.configure(bg="#FFFFFF")
 ########################################################################
 # Functions
 
+# Lookup the object and if it exists, then track it and update the data appropriately. 
+def objectLookup():
+    
+    azimuth = tracking.lookup()
+    Label_azimuth.configure(text = azimuth)
+    Label_azimuth.after(1000, objectLookup)
+
+
+
+
 ########################################################################
 # Elements
 
-
-Label_id14 = customtkinter.CTkLabel(
+Label_azimuth = customtkinter.CTkLabel(
     master=window,
     text="Label14",
     font=("Arial", 14),
@@ -36,7 +45,7 @@ Label_id14 = customtkinter.CTkLabel(
     bg_color="#FFFFFF",
     fg_color="#FFFFFF",
     )
-Label_id14.place(x=270, y=180)
+Label_azimuth.place(x=270, y=180)
 Button_id21 = customtkinter.CTkButton(
     master=window,
     text="+90",
@@ -127,6 +136,7 @@ Button_id19 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
+    command=objectLookup
     )
 Button_id19.place(x=400, y=140)
 Label_id8 = customtkinter.CTkLabel(
@@ -154,6 +164,7 @@ Entry_id6 = customtkinter.CTkEntry(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#f7f7f7",
+
     )
 Entry_id6.place(x=270, y=140)
 Button_id22 = customtkinter.CTkButton(
@@ -186,6 +197,7 @@ Button_id1 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
+    command=tracking.enableTracking
     )
 Button_id1.place(x=30, y=140)
 Label_id16 = customtkinter.CTkLabel(
@@ -278,6 +290,7 @@ Button_id2 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
+    command=tracking.disableTracking
     )
 Button_id2.place(x=80, y=140)
 Button_id24 = customtkinter.CTkButton(

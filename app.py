@@ -26,7 +26,7 @@ def objectLookup():
     
     # Grab the data
     object = objectEntry.get()
-    az, alt = tracking.lookup(object)
+    az, alt, skyCoordObj, home = tracking.lookup(object)
 
     # Write the data
     Label_object.configure(text = object)
@@ -34,16 +34,20 @@ def objectLookup():
     Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
 
     # Queue updates
-    #Label_azimuth.after(5000, objectUpdate())
+    objectUpdate(skyCoordObj, home)
 
 
 # Update the object currently in focus
-def objectUpdate():
+def objectUpdate(skyCoordObj, home):
+
+    # Fetch the new info
+    az, alt = tracking.update(skyCoordObj, home)
 
     # Grab the azimuth and add earth rotation amount
-    azimuth = 0
-    newAzimuth = float(azimuth + 0.000075)
-    Label_azimuth.configure(text = "Azimuth: " + str(newAzimuth) + "°")
+    Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
+    Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
+    window.after(1000, lambda: objectUpdate(skyCoordObj, home))
+
     
 
 ########################################################################
@@ -51,7 +55,7 @@ def objectUpdate():
 
 Label_object = customtkinter.CTkLabel(
     master=window,
-    text="Label14",
+    text="None",
     font=("Arial", 14),
     text_color="#000000",
     height=30,

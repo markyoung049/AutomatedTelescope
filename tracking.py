@@ -65,7 +65,7 @@ def lookup(object):
 
         # Return the data and log the failure
         log("Data for " + object + " not found.")
-        return "Object not found."
+        return (0, 0)
 
     # If it does
     else:
@@ -89,14 +89,17 @@ def lookup(object):
         # Return the data and log the completion
         log("Data for " + object + " obtained.")
 
-        return (altaz.az.deg, altaz.alt.deg)
+        return (altaz.az.deg, altaz.alt.deg, skyCoordObj, home)
 
     
-    data = astropy.coordinates.SkyCoord.from_name(object)
-    print(data)
-    return "0"
-    
+
 
 # Function to update azimuth
-def update():
-    pass
+def update(skyCoordObj, home):
+
+    # Set the new time (a different time, say 5 minutes later)
+    new_time = Time(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+    # Convert to altitude/azimuth for the new time
+    altaz = skyCoordObj.transform_to(AltAz(obstime=new_time, location=home))
+    return (altaz.az.deg, altaz.alt.deg)

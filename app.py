@@ -14,6 +14,7 @@ import tracking
 
 window = Tk()
 window.title("Telescope Tracking System")
+window.iconbitmap("images\\moon.ico")
 window.geometry("800x500")
 window.configure(bg="#FFFFFF")
 currentPlanet = None

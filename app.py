@@ -10,13 +10,13 @@ import tracking
 
 
 ########################################################################
-# Main Window Properties
+# Main Window Properties and global variables
 
 window = Tk()
 window.title("Telescope Tracking System")
 window.geometry("800x500")
 window.configure(bg="#FFFFFF")
-
+currentPlanet = None
 
 ########################################################################
 # Functions
@@ -26,6 +26,10 @@ def objectLookup():
     
     # Grab the data
     object = objectEntry.get()
+    
+    # Update the current planet
+    global currentPlanet
+    currentPlanet = object
     az, alt, skyCoordObj, home = tracking.lookup(object)
 
     # Write the data
@@ -34,19 +38,21 @@ def objectLookup():
     Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
 
     # Queue updates
-    objectUpdate(skyCoordObj, home)
+    objectUpdate(skyCoordObj, home, object)
 
 
 # Update the object currently in focus
-def objectUpdate(skyCoordObj, home):
+def objectUpdate(skyCoordObj, home, object):
 
-    # Fetch the new info
-    az, alt = tracking.update(skyCoordObj, home)
+    # Check if this task should be cancelled since a new object has been chosen
+    if object == currentPlanet:
+        # Fetch the new info
+        az, alt = tracking.update(skyCoordObj, home)
 
-    # Grab the azimuth and add earth rotation amount
-    Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
-    Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
-    window.after(1000, lambda: objectUpdate(skyCoordObj, home))
+        # Grab the azimuth and add earth rotation amount
+        Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
+        Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
+        window.after(1000, lambda: objectUpdate(skyCoordObj, home, object))
 
     
 

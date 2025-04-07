@@ -11,21 +11,17 @@ from astropy import units as u
 from astropy.time import Time
 from astropy.coordinates import EarthLocation
 
+
+
 # Function to print a log message to the console. Returns nothing.
 def log(message):
     print('>', datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  ":",  message)
     
 
-# Function to turn on the system. Return 0 if sucessful, -1 if not.
-def enableTracking():
-    log("Tracking Enabled")
-    return -1
-
-
-# Function to turn off the system. Return 0 if sucessful, -1 if not.
-def disableTracking():
-    log("Tracking Disabled")
+# Function to track the given object. Basically it will prompt the motors to move with it. Return 0 if fine, -1 if failure.
+def autoTrack(az, alt):
     return 0
+
 
 # Function to look up planetary data for an object. Return data if it exists, and -1 if it doesnt
 def lookup(object):
@@ -103,3 +99,7 @@ def update(skyCoordObj, home):
     # Convert to altitude/azimuth for the new time
     altaz = skyCoordObj.transform_to(AltAz(obstime=new_time, location=home))
     return (altaz.az.deg, altaz.alt.deg)
+
+
+
+# Function to have the telescope go to a specific coordinate

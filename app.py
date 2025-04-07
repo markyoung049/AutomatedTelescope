@@ -18,9 +18,30 @@ window.iconbitmap("images\\moon.ico")
 window.geometry("800x500")
 window.configure(bg="#FFFFFF")
 currentPlanet = None
+track = False
 
 ########################################################################
 # Functions
+
+# Function to turn on the system.
+def enableTracking():
+    
+    # Set the system to tracking mode
+    global track
+    track = True
+    tracking.log("Tracking Enabled")
+
+
+
+# Function to turn off the system.
+def disableTracking():
+    
+    # Set the system to tracking mode
+    global track
+    track = False
+    tracking.log("Tracking Disabled")
+
+
 
 # Lookup the object and if it exists, then track it and update the data appropriately. 
 def objectLookup():
@@ -38,8 +59,17 @@ def objectLookup():
     Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
     Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
 
-    # Queue updates
+    # Queue updates and tracking
     objectUpdate(skyCoordObj, home, object)
+    if track:
+        status = tracking.autoTrack(az, alt)
+
+        # Make sure the track was successful, and if not, then disable tracking and log the error
+        if status != 0:
+            tracking.log("Tracking failed, disabling tracking...")
+            disableTracking()
+
+
 
 
 # Update the object currently in focus
@@ -223,7 +253,7 @@ Button_id1 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
-    command=tracking.enableTracking
+    command=enableTracking
     )
 Button_id1.place(x=30, y=140)
 Label_altitude = customtkinter.CTkLabel(
@@ -316,7 +346,7 @@ Button_id2 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
-    command=tracking.disableTracking
+    command=disableTracking
     )
 Button_id2.place(x=80, y=140)
 Button_id24 = customtkinter.CTkButton(

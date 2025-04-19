@@ -2,9 +2,11 @@
 # Automated Telescope Tracking Functions
 #########################################################################
 import datetime
-import astropy.coordinates
 import requests
 import base64
+import serial
+import numpy as np
+import math
 
 from astropy.coordinates import SkyCoord, AltAz
 from astropy import units as u
@@ -20,6 +22,9 @@ def log(message):
 
 # Function to track the given object. Basically it will prompt the motors to move with it. Return 0 if fine, -1 if failure.
 def autoTrack(az, alt):
+
+
+
     return 0
 
 
@@ -102,4 +107,41 @@ def update(skyCoordObj, home):
 
 
 
-# Function to have the telescope go to a specific coordinate
+# Function to give the heading of the object using arduino data. Returns the heading s in x and y
+def heading(arduino):
+
+    # Read the request from Arduino
+    request = arduino.readline().decode('utf-8').strip().split(' ')
+
+    if request[0] == "Data:":
+
+        # Do math for accelerometer vector
+        up = np.array([float(request[1]), float(request[2]), float(request[3])]) # Get the accel ector
+        up = up / np.linalg.norm(up) # Normalize the vector
+        
+        # Magnetometer vector
+        offset = np.array([17.47, 22.05, 117.98]) # Offset for the magnetometer vector
+        magVector = np.array([float(request[4]), float(request[5]), float(request[6])]) - offset
+        magVector = magVector / np.linalg.norm(magVector) # Normalize the vector
+
+        # Compute east via accel x magw
+        east = np.cross(magVector, up) # Cross product of accel and mag vectors   
+        east = east / np.linalg.norm(east) # Normalize the vector
+
+        # North is east x up
+        north = np.cross(up, east) # Cross product of east and accel vectors
+        north = north / np.linalg.norm(north) # Normalize the vector
+        
+        # Now transform from the seosors coorindtas to 3d space using north, east, and up as bases
+        transformInverse = np.array([east, north, up]).T
+        transform = np.linalg.inv(transformInverse) # Inverse of the transformation matrix
+        y = np.array([0, -1, 0]).T
+
+        yNew = np.dot(transform, y) # This is the heading vector in 3d space
+
+        # Compute the heading angles in degrees
+        headingX = math.atan2(yNew[0], yNew[1]) * (180.0 / math.pi)
+        headingY = math.atan2(yNew[2], yNew[1]) * (180.0 / math.pi)
+
+
+        return (headingX, headingY)

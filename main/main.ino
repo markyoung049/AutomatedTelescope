@@ -21,6 +21,7 @@ void loop() {
   float mag[3] = {0.0, 0.0, 0.0}; // Grabbing the magnetometer vector
   float gyro[3] = {0.0, 0.0, 0.0}; // Grabbing the gyroscope vector 
 
+
   // Avgerage the values for smoothing 
   for (int i=0; i<100; i++){
 
@@ -46,6 +47,8 @@ void loop() {
     mag[2] += m[2]/100;
     
   }
+  
+
 
   Serial.print("Data: ");
   
@@ -56,11 +59,11 @@ void loop() {
   Serial.print(accel[2]);
   Serial.print(' '); 
   
-  Serial.print(mag[0]);
-  Serial.print(' ');
   Serial.print(mag[1]);
   Serial.print(' ');
-  Serial.print(mag[2]);
+  Serial.print(mag[0]);
+  Serial.print(' ');
+  Serial.print(-mag[2]);
 
   Serial.print('\n');
   

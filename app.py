@@ -7,6 +7,9 @@
 from tkinter import *
 import customtkinter
 import tracking
+from PIL import Image, ImageTk
+import math
+import serial
 
 
 ########################################################################
@@ -20,6 +23,18 @@ window.configure(bg="#FFFFFF")
 currentPlanet = None
 track = False
 
+# Load the arrow image
+base_img = Image.open("images\\arrow.png")  # make sure it's pointing right by default
+# Resize it (e.g. to 50x50 pixels)
+resized_img = base_img.resize((100, 100), Image.LANCZOS)
+arrow_img = ImageTk.PhotoImage(resized_img)
+
+
+
+# Set up serial communication with the sensor arduino
+sensor = serial.Serial('COM3', 9600)
+
+
 ########################################################################
 # Functions
 
@@ -28,8 +43,14 @@ def enableTracking():
     
     # Set the system to tracking mode
     global track
+    
+    # Set the system to tracking mode
     track = True
     tracking.log("Tracking Enabled")
+
+    # Queue the next update
+    window.after(1000, headingUpdate)
+
 
 
 
@@ -42,12 +63,30 @@ def disableTracking():
     tracking.log("Tracking Disabled")
 
 
+# Update the telescope heading. This will be called every so-often to update the data.
+def headingUpdate():
+
+    if track:
+
+        # if the Data is available, then read it
+        if sensor.in_waiting > 0:
+            # Grab the azimuth and altitude data from the sensor
+            azimuth, altitude = tracking.heading(sensor)
+
+            # Update the labels with the new data
+            telescopeAltitudeLabel.configure(text = "Altitude: "+ f'{altitude:.2f}' +"°")
+            telescopeAzimuthLabel.configure(text = "Azimuth: "+ f'{azimuth:.2f}' +"°")
+
+        # Queue the next update
+        window.after(10, headingUpdate)
+
+
 
 # Lookup the object and if it exists, then track it and update the data appropriately. 
 def objectLookup():
     
     # Grab the data
-    object = objectEntry.get()
+    object = objectEntry.get().title()
     
     # Update the current planet
     global currentPlanet
@@ -60,7 +99,6 @@ def objectLookup():
     Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
 
     # Queue updates and tracking
-    objectUpdate(skyCoordObj, home, object)
     if track:
         status = tracking.autoTrack(az, alt)
 
@@ -68,6 +106,9 @@ def objectLookup():
         if status != 0:
             tracking.log("Tracking failed, disabling tracking...")
             disableTracking()
+
+    objectUpdate(skyCoordObj, home, object)
+    
 
 
 
@@ -83,12 +124,20 @@ def objectUpdate(skyCoordObj, home, object):
         # Grab the azimuth and add earth rotation amount
         Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
         Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
-        window.after(1000, lambda: objectUpdate(skyCoordObj, home, object))
+        window.after(100, lambda: objectUpdate(skyCoordObj, home, object))
 
     
 
 ########################################################################
 # Elements
+
+canvas = Canvas(window, 
+    width=100, 
+    height=100, 
+    bg="white")
+canvas.place(x=300, y=300)
+
+arrow_obj = canvas.create_image(50, 50, image=arrow_img)
 
 Label_object = customtkinter.CTkLabel(
     master=window,
@@ -142,9 +191,9 @@ Label_id10 = customtkinter.CTkLabel(
     fg_color="#FFFFFF",
     )
 Label_id10.place(x=250, y=20)
-Label_id7 = customtkinter.CTkLabel(
+telescopeAzimuthLabel = customtkinter.CTkLabel(
     master=window,
-    text="Label7",
+    text="Azimuth",
     font=("Arial", 14),
     text_color="#000000",
     height=30,
@@ -153,7 +202,7 @@ Label_id7 = customtkinter.CTkLabel(
     bg_color="#FFFFFF",
     fg_color="#FFFFFF",
     )
-Label_id7.place(x=30, y=180)
+telescopeAzimuthLabel.place(x=30, y=180)
 Label_azimuth = customtkinter.CTkLabel(
     master=window,
     text="Azimuth: ",
@@ -195,9 +244,9 @@ Button_id19 = customtkinter.CTkButton(
     command=lambda: objectLookup()
     )
 Button_id19.place(x=400, y=140)
-Label_id8 = customtkinter.CTkLabel(
+telescopeAltitudeLabel = customtkinter.CTkLabel(
     master=window,
-    text="Label8",
+    text="Altitude: ",
     font=("Arial", 14),
     text_color="#000000",
     height=30,
@@ -206,7 +255,7 @@ Label_id8 = customtkinter.CTkLabel(
     bg_color="#FFFFFF",
     fg_color="#FFFFFF",
     )
-Label_id8.place(x=30, y=210)
+telescopeAltitudeLabel.place(x=30, y=210)
 objectEntry = customtkinter.CTkEntry(
     master=window,
     placeholder_text="e.g. Moon",

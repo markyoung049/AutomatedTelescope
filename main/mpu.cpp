@@ -161,6 +161,7 @@ void readMagData(float *data) {
   data[2] = magZF;
 }
 
+
 // Helper function to write a byte to a specific register
 void writeByte(uint8_t address, uint8_t subAddress, uint8_t data) {
   Wire.beginTransmission(address);  // Start communication with the device

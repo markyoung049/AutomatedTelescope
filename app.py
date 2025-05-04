@@ -32,7 +32,10 @@ arrow_img = ImageTk.PhotoImage(resized_img)
 
 
 # Set up serial communication with the sensor arduino
-sensor = serial.Serial('COM3', 9600)
+try:
+    sensor = serial.Serial('COM3', 9600)
+except:
+    tracking.log(("Error: Unable to connect to the telescope sensors. Please check the connection."))
 
 
 ########################################################################

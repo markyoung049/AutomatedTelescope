@@ -7,6 +7,7 @@ import base64
 import serial
 import numpy as np
 import math
+import time
 
 from astropy.coordinates import SkyCoord, AltAz
 from astropy import units as u
@@ -142,6 +143,27 @@ def heading(arduino):
         # Compute the heading angles in degrees
         headingX = math.atan2(yNew[0], yNew[1]) * (180.0 / math.pi)
         headingY = math.atan2(yNew[2], yNew[1]) * (180.0 / math.pi)
-
-
         return (headingX, headingY)
+    
+    else:
+        return heading(arduino)
+    
+
+# Function to turn the motor
+def turn (arduino, angle, speed):
+    command = f"turn:{angle},{speed}\n"
+    arduino.write(command.encode())
+    
+    #Wait for the turn to complete
+    time.sleep(1)
+    
+
+    # Check if response
+    response = arduino.readline().decode().strip()
+    print(response)
+    if response == "Completed":
+        print("turned")
+    else:
+        print("failed")
+
+    

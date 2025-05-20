@@ -22,6 +22,7 @@ window.geometry("800x500")
 window.configure(bg="#FFFFFF")
 currentPlanet = None
 track = False
+lookup = False
 
 # Load the arrow image
 base_img = Image.open("images\\arrow.png")  # make sure it's pointing right by default
@@ -32,11 +33,8 @@ arrow_img = ImageTk.PhotoImage(resized_img)
 
 
 # Set up serial communication with the sensor arduino
-try:
-    sensor = serial.Serial('COM3', 9600)
-except:
-    tracking.log(("Error: Unable to connect to the telescope sensors. Please check the connection."))
-
+sensor = serial.Serial('COM5', 9600, timeout=2)
+motor = serial.Serial('COM4', 9600, timeout=2)
 
 ########################################################################
 # Functions
@@ -57,6 +55,7 @@ def enableTracking():
 
 
 
+
 # Function to turn off the system.
 def disableTracking():
     
@@ -64,6 +63,9 @@ def disableTracking():
     global track
     track = False
     tracking.log("Tracking Disabled")
+
+
+
 
 
 # Update the telescope heading. This will be called every so-often to update the data.
@@ -80,6 +82,29 @@ def headingUpdate():
             telescopeAltitudeLabel.configure(text = "Altitude: "+ f'{altitude:.2f}' +"°")
             telescopeAzimuthLabel.configure(text = "Azimuth: "+ f'{azimuth:.2f}' +"°")
 
+
+            if lookup:
+                objectAZ = float(Label_azimuth.cget("text").split(': ')[1][:-1]) % 360
+                objectALT = float(Label_altitude.cget("text").split(': ')[1][:-1]) % 360
+
+                xAngle = objectAZ - azimuth
+                yAngle = objectALT - altitude
+
+                if xAngle >= 180:
+                    xAngle = xAngle - 360
+
+                if yAngle >= 180:
+                    yAngle = yAngle - 360
+
+                tracking.turn(motor, xAngle, xAngle)
+
+
+
+
+
+
+
+
         # Queue the next update
         window.after(10, headingUpdate)
 
@@ -88,6 +113,8 @@ def headingUpdate():
 # Lookup the object and if it exists, then track it and update the data appropriately. 
 def objectLookup():
     
+    global lookup
+    lookup = True
     # Grab the data
     object = objectEntry.get().title()
     
@@ -124,12 +151,15 @@ def objectUpdate(skyCoordObj, home, object):
         # Fetch the new info
         az, alt = tracking.update(skyCoordObj, home)
 
+
         # Grab the azimuth and add earth rotation amount
         Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
         Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
         window.after(100, lambda: objectUpdate(skyCoordObj, home, object))
 
-    
+    else: 
+        global lookup
+        lookup = False
 
 ########################################################################
 # Elements

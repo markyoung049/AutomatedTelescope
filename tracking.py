@@ -149,21 +149,88 @@ def heading(arduino):
         return heading(arduino)
     
 
-# Function to turn the motor
-def turn (arduino, angle, speed):
-    command = f"turn:{angle},{speed}\n"
-    arduino.write(command.encode())
-    
-    #Wait for the turn to complete
-    time.sleep(1)
-    
 
-    # Check if response
-    response = arduino.readline().decode().strip()
-    print(response)
-    if response == "Completed":
-        print("turned")
-    else:
-        print("failed")
+
+
+
+
+# Function to track the object
+class motors:
+
+    # Initialize the motors class
+    def __init__(self, arduino, sensor):
+        self.arduino = arduino
+        self.tracking = False
+        self.target = None
+        self.az = 0
+        self.alt = 0
+        self.skyCoordObj = None
+        self.sensor=sensor
+
+
+    # Function to turn the motor
+    def turn (self, xAngle, yAngle, speed):
+        command = f"turn:{xAngle},{speed}\n"
+        self.arduino.write(command.encode())
+        time.sleep(0.1) # Short delay to ensure command is sent
+        #Wait for the turn to complete
+        while self.arduino.in_waiting == 0:
+            time.sleep(0.1)
+        
+
+        # Check if response
+        response = self.arduino.readline().decode().strip()
+        if response == "Unknown command":
+            log("Motor command failed.")    
+            pass
+        else:
+            log(f"Turned motors by X: {xAngle} at speed {speed}.")
+            pass
+
+
+
+    # Function to track the object
+    def track(self, target):    
+        self.target = target
+        self.tracking = True
+
+        while self.tracking:
+            # First, look up the object
+            (self.az, self.alt, self.skyCoordObj, self.home) = lookup(self.target)
+            if self.az == 0 and self.alt == 0:
+                log("Tracking failed.")
+                self.tracking = False
+                return -1
+            
+            log(f"Tracking {self.target} at Az: {self.az}, Alt: {self.alt}")
+
+            # Now, get the heading of the telescope
+            (headingX, headingY) = heading(self.sensor)
+            log(f"Current Heading - X: {headingX}, Y: {headingY}")
+
+            # Compute the difference
+            diffX = self.az - headingX
+            diffY = self.alt - headingY
+
+            # Normalize the difference to be within -180 to 180
+            diffX = (diffX + 180) % 360 - 180
+            diffY = (diffY + 180) % 360 - 180
+
+            # If the difference is significant, turn the motors
+            if abs(diffX) > 1 or abs(diffY) > 1:
+                self.turn(self.arduino, diffX, diffY, speed=90)
+            
+            # Wait for a bit before updating again
+            time.sleep(10)
+
+        return 0
+
+
+    # Function to stop tracking
+    def stop(self):
+        self.tracking = False
+        log("Stopped tracking.")
+        return 0
+
 
     

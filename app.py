@@ -17,96 +17,57 @@ import serial
 
 window = Tk()
 window.title("Telescope Tracking System")
-window.iconbitmap("images\\moon.ico")
+#window.iconbitmap("images\\moon.ico")
 window.geometry("800x500")
 window.configure(bg="#FFFFFF")
 currentPlanet = None
 track = False
 lookup = False
 
-# Load the arrow image
-base_img = Image.open("images\\arrow.png")  # make sure it's pointing right by default
-# Resize it (e.g. to 50x50 pixels)
-resized_img = base_img.resize((100, 100), Image.LANCZOS)
-arrow_img = ImageTk.PhotoImage(resized_img)
+
 
 
 
 # Set up serial communication with the sensor arduino
-sensor = serial.Serial('COM5', 9600, timeout=2)
-motor = serial.Serial('COM4', 9600, timeout=2)
+sensor = serial.Serial('//dev/ttyACM1', 9600, timeout=2)
+motor = serial.Serial('//dev//ttyACM0', 9600, timeout=2)
+motors = tracking.motors(motor,sensor)
+
 
 ########################################################################
 # Functions
-
-# Function to turn on the system.
-def enableTracking():
-    
-    # Set the system to tracking mode
-    global track
-    
-    # Set the system to tracking mode
-    track = True
-    tracking.log("Tracking Enabled")
-
-    # Queue the next update
-    window.after(1000, headingUpdate)
-
-
-
-
-
-# Function to turn off the system.
-def disableTracking():
-    
-    # Set the system to tracking mode
-    global track
-    track = False
-    tracking.log("Tracking Disabled")
-
-
 
 
 
 # Update the telescope heading. This will be called every so-often to update the data.
 def headingUpdate():
+    # if the Data is available, then read it
+    if sensor.in_waiting > 0:
+        # Grab the azimuth and altitude data from the sensor
+        azimuth, altitude = tracking.heading(sensor)
 
-    if track:
-
-        # if the Data is available, then read it
-        if sensor.in_waiting > 0:
-            # Grab the azimuth and altitude data from the sensor
-            azimuth, altitude = tracking.heading(sensor)
-
-            # Update the labels with the new data
-            telescopeAltitudeLabel.configure(text = "Altitude: "+ f'{altitude:.2f}' +"°")
-            telescopeAzimuthLabel.configure(text = "Azimuth: "+ f'{azimuth:.2f}' +"°")
+        # Update the labels with the new data
+        telescopeAltitudeLabel.configure(text = "Altitude: "+ f'{altitude:.2f}' +"°")
+        telescopeAzimuthLabel.configure(text = "Azimuth: "+ f'{azimuth:.2f}' +"°")
 
 
-            if lookup:
-                objectAZ = float(Label_azimuth.cget("text").split(': ')[1][:-1]) % 360
-                objectALT = float(Label_altitude.cget("text").split(': ')[1][:-1]) % 360
+        if lookup:
+            objectAZ = float(Label_azimuth.cget("text").split(': ')[1][:-1]) % 360
+            objectALT = float(Label_altitude.cget("text").split(': ')[1][:-1]) % 360
 
-                xAngle = objectAZ - azimuth
-                yAngle = objectALT - altitude
+            xAngle = objectAZ - azimuth
+            yAngle = objectALT - altitude
 
-                if xAngle >= 180:
-                    xAngle = xAngle - 360
+            if xAngle >= 180:
+                xAngle = xAngle - 360
 
-                if yAngle >= 180:
-                    yAngle = yAngle - 360
+            if yAngle >= 180:
+                yAngle = yAngle - 360
 
-                tracking.turn(motor, xAngle, xAngle)
+            
 
-
-
-
-
-
-
-
-        # Queue the next update
-        window.after(10, headingUpdate)
+    # Queue the next update
+    window.after(10, headingUpdate)
 
 
 
@@ -128,14 +89,6 @@ def objectLookup():
     Label_azimuth.configure(text = "Azimuth: "+ f'{az:.2f}' +"°")
     Label_altitude.configure(text = "Altitude: "+ f'{alt:.2f}' +"°")
 
-    # Queue updates and tracking
-    if track:
-        status = tracking.autoTrack(az, alt)
-
-        # Make sure the track was successful, and if not, then disable tracking and log the error
-        if status != 0:
-            tracking.log("Tracking failed, disabling tracking...")
-            disableTracking()
 
     objectUpdate(skyCoordObj, home, object)
     
@@ -170,7 +123,7 @@ canvas = Canvas(window,
     bg="white")
 canvas.place(x=300, y=300)
 
-arrow_obj = canvas.create_image(50, 50, image=arrow_img)
+
 
 Label_object = customtkinter.CTkLabel(
     master=window,
@@ -335,7 +288,7 @@ Button_id1 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
-    command=enableTracking
+    command=lambda: motors.track("Jupiter")
     )
 Button_id1.place(x=30, y=140)
 Label_altitude = customtkinter.CTkLabel(
@@ -428,7 +381,7 @@ Button_id2 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
-    command=disableTracking
+    command=motors.stop
     )
 Button_id2.place(x=80, y=140)
 Button_id24 = customtkinter.CTkButton(
@@ -445,6 +398,7 @@ Button_id24 = customtkinter.CTkButton(
     border_color="#000000",
     bg_color="#FFFFFF",
     fg_color="#F0F0F0",
+    command=lambda: motors.turn(360 * 10, 0, 360 * 10)
     )
 Button_id24.place(x=570, y=240)
 
